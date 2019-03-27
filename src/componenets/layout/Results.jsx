@@ -2,27 +2,54 @@ import React from 'react';
 import { connect } from 'react-redux';
 import SingleResult from './SingleResult';
 import { getNextPage } from '../../redux/actions/searchActions';
+import _ from 'lodash';
 let a = 1;
-function Results({ movies, total, getNextPage }) {
-    console.log(movies);
-    const result = !movies ? <div className="container"><h3 className="center">No results</h3></div> : movies.map((movie, index) => { // I've made '!movies' because I wanted return 'No results' as first, cuz it looks better
-        if (index === movies.length - 1)
-            return <SingleResult key={movie.imdbID} movie={movie} trigger={"trigger" + a} />
-        else
-            return <SingleResult key={movie.imdbID} movie={movie} />
-    })
-    const pagesNumber = total ? Math.ceil(total / 10) : 1;
-    const trigger = document.querySelector('.trigger' + a) ? console.log(document.querySelector('.trigger' + a)) : null;
-    if (trigger && trigger.offsetTop > (window.scrollY + window.innerHeight) && a < pagesNumber) {
-        console.log('Im in');
+
+class Results extends React.Component {
+    state = {
+        flag: true
+    }
+
+    componentDidUpdate() {
+        const trigger = document.querySelector('.trigger');
+        const throt = _.throttle(() => {
+            if (trigger.offsetTop < window.scrollY + window.innerHeight) {
+                this.getNextPage();
+                window.removeEventListener('scroll', throt);
+            }
+        }, 1000)
+        window.addEventListener('scroll', throt);
+    }
+
+    getNextPage = () => {
+        const pagesNumber = this.props.total ? Math.ceil(this.props.total / 10) : 1;
         a++;
-        getNextPage(a);
-    };
-    return (
-        <div className="movieResult">
-            {result}
-        </div>
-    )
+        if (a < pagesNumber && this.state.flag === true) {
+            this.props.getNextPage(a);
+        }
+    }
+
+    render() {
+        const result = !this.props.movies ? <div className="container"><h3 className="center">No results</h3></div> : this.props.movies.map((movie, index) => { // I've made '!movies' because I wanted return 'No results' as first, cuz it looks better
+            if (index === this.props.movies.length - 1)
+                return <SingleResult key={movie.imdbID} movie={movie} trigger={"trigger"} />
+            else
+                return <SingleResult key={movie.imdbID} movie={movie} />
+        })
+        const trigger = result.length > 1 ? <div onClick={this.getNextPage} className="btn-floating trigger">\/</div> : null;
+        return (
+            <div className="movieResult">
+                {result}
+                <div className="container">
+                    <div className="row">
+                        <div className="col s12 m12 l12 center">
+                            {trigger}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 }
 
 const mapStateToProps = state => {
