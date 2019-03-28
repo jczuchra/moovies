@@ -3,13 +3,8 @@ import { connect } from 'react-redux';
 import SingleResult from './SingleResult';
 import { getNextPage } from '../../redux/actions/searchActions';
 import _ from 'lodash';
-let a = 1;
 
 class Results extends React.Component {
-    state = {
-        flag: true
-    }
-
     componentDidUpdate() {
         const trigger = document.querySelector('.trigger');
         const throt = _.throttle(() => {
@@ -20,17 +15,16 @@ class Results extends React.Component {
         }, 1000)
         window.addEventListener('scroll', throt);
     }
-
     getNextPage = () => {
         const pagesNumber = this.props.total ? Math.ceil(this.props.total / 10) : 1;
-        a++;
-        if (a < pagesNumber && this.state.flag === true) {
-            this.props.getNextPage(a);
+        let pageNumber = this.props.pageNumber;
+        pageNumber += 1;
+        if (pageNumber < pagesNumber) {
+            this.props.getNextPage(pageNumber);
         }
     }
-
     render() {
-        const result = !this.props.movies ? <div className="container"><h3 className="center">No results</h3></div> : this.props.movies.map((movie, index) => { // I've made '!movies' because I wanted return 'No results' as first, cuz it looks better
+        const result = !this.props.movies ? <div className="container"><h3 className="center">No results</h3></div> : this.props.movies.map((movie, index) => { // I've made '!movies' because I wanted to return 'No results' as first, cuz it looks better
             if (index === this.props.movies.length - 1)
                 return <SingleResult key={movie.imdbID} movie={movie} trigger={"trigger"} />
             else
@@ -53,16 +47,16 @@ class Results extends React.Component {
 }
 
 const mapStateToProps = state => {
-    console.log(state);
     return {
         movies: state.search.movies,
-        total: state.search.total
+        total: state.search.total,
+        pageNumber: state.search.pageNumber
     }
 }
 
 const mapDispachToProps = (dispatch) => {
     return {
-        getNextPage: pageNumber => dispatch(getNextPage(pageNumber))
+        getNextPage: pageNumber => dispatch(getNextPage(pageNumber)),
     }
 }
 
